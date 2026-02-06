@@ -1,0 +1,563 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =====================================================
+   JGI UNIVERSITY BOARDROOM - UNIFIED THEME SYSTEM
+   Brand Colors: Navy Blue (#001c54) & Gold (#c9a227)
+   Design Philosophy: Same brand, different ambiance
+   ===================================================== */
+
+@layer base {
+  :root {
+    /* ===== LIGHT MODE ===== */
+    /* Warm, professional, inviting */
+
+    /* Backgrounds - Warm off-white with subtle warmth */
+    --background: 40 30% 98%;
+    --background-secondary: 40 20% 96%;
+
+    /* Cards - Clean white with subtle depth */
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    /* Text Hierarchy - JGI Navy based */
+    --foreground: 222 47% 11%;
+    --foreground-secondary: 222 30% 30%;
+    --foreground-muted: 222 15% 50%;
+
+    /* Primary - JGI Prussian Blue */
+    --primary: 222 100% 17%;
+    --primary-hover: 222 100% 22%;
+    --primary-foreground: 45 100% 96%;
+
+    /* Secondary - Subtle navy tint */
+    --secondary: 222 20% 94%;
+    --secondary-foreground: 222 47% 11%;
+
+    /* Muted - Warm gray */
+    --muted: 40 15% 94%;
+    --muted-foreground: 222 15% 50%;
+
+    /* Accent - JGI Gold */
+    --accent: 38 75% 47%;
+    --accent-subtle: 38 60% 95%;
+    --accent-foreground: 222 47% 11%;
+
+    /* Secondary Accent - Warm orange */
+    --accent-orange: 25 95% 53%;
+    --accent-orange-subtle: 25 80% 95%;
+
+    /* Semantic Colors - Vibrant but harmonious */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 142 71% 45%;
+    --success-bg: 142 60% 95%;
+    --warning: 38 92% 50%;
+    --warning-bg: 38 80% 95%;
+
+    /* UI Elements */
+    --border: 222 20% 90%;
+    --input: 222 20% 90%;
+    --ring: 222 100% 17%;
+    --radius: 0.625rem;
+
+    /* Shadows for light mode */
+    --shadow-color: 222 50% 10%;
+  }
+
+  .dark {
+    /* ===== DARK MODE ===== */
+    /* Deep, sophisticated, same brand identity */
+    /* Key: Use JGI Navy as the base, Gold as highlights */
+
+    /* Backgrounds - Deep JGI Navy Blue */
+    --background: 222 50% 7%;
+    --background-secondary: 222 45% 10%;
+
+    /* Cards - Elevated navy surfaces */
+    --card: 222 42% 12%;
+    --card-foreground: 40 30% 96%;
+
+    /* Text Hierarchy - Warm whites */
+    --foreground: 40 30% 96%;
+    --foreground-secondary: 40 20% 80%;
+    --foreground-muted: 222 15% 55%;
+
+    /* Primary - JGI Gold becomes primary action in dark */
+    --primary: 38 75% 50%;
+    --primary-hover: 38 80% 55%;
+    --primary-foreground: 222 50% 8%;
+
+    /* Secondary - Lighter navy */
+    --secondary: 222 40% 18%;
+    --secondary-foreground: 40 30% 96%;
+
+    /* Muted - Deep navy */
+    --muted: 222 40% 15%;
+    --muted-foreground: 222 15% 55%;
+
+    /* Accent - Lighter blue for visibility */
+    --accent: 210 100% 65%;
+    --accent-subtle: 210 50% 18%;
+    --accent-foreground: 40 30% 96%;
+
+    /* Secondary Accent */
+    --accent-orange: 25 95% 60%;
+    --accent-orange-subtle: 25 60% 15%;
+
+    /* Semantic Colors - Adjusted for dark backgrounds */
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 142 60% 50%;
+    --success-bg: 142 40% 15%;
+    --warning: 38 85% 55%;
+    --warning-bg: 38 50% 15%;
+
+    /* UI Elements */
+    --border: 222 30% 20%;
+    --input: 222 30% 18%;
+    --ring: 38 75% 50%;
+
+    /* Shadows for dark mode */
+    --shadow-color: 222 80% 3%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Smooth theme transitions */
+  *, *::before, *::after {
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+}
+
+/* =====================================================
+   COMMON UTILITY CLASSES
+   ===================================================== */
+
+/* Glass effect - works in both modes */
+.glass {
+  @apply backdrop-blur-xl;
+  background: hsl(var(--card) / 0.8);
+  border: 1px solid hsl(var(--border) / 0.5);
+}
+
+.dark .glass {
+  background: hsl(var(--card) / 0.9);
+  border: 1px solid hsl(var(--border) / 0.3);
+}
+
+/* Gradient text - brand colors */
+.gradient-text {
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dark .gradient-text {
+  background: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(210 100% 70%) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Brand gradient backgrounds */
+.bg-brand-gradient {
+  background: linear-gradient(135deg, #001c54 0%, #002d80 50%, #001c54 100%);
+}
+
+.dark .bg-brand-gradient {
+  background: linear-gradient(135deg, hsl(222 50% 12%) 0%, hsl(222 45% 15%) 50%, hsl(222 50% 12%) 100%);
+}
+
+/* Gold accent gradient */
+.bg-gold-gradient {
+  background: linear-gradient(135deg, #c9a227 0%, #e3b82a 50%, #c9a227 100%);
+}
+
+/* =====================================================
+   FULLCALENDAR - UNIFIED THEME
+   ===================================================== */
+
+.fc {
+  --fc-border-color: hsl(var(--border));
+  --fc-page-bg-color: transparent;
+  --fc-neutral-bg-color: hsl(var(--muted));
+  --fc-today-bg-color: hsl(var(--accent-subtle));
+  --fc-non-business-color: hsl(var(--muted) / 0.5);
+  --fc-button-bg-color: hsl(var(--primary));
+  --fc-button-border-color: hsl(var(--primary));
+  --fc-button-hover-bg-color: hsl(var(--primary-hover));
+  --fc-button-hover-border-color: hsl(var(--primary-hover));
+  --fc-button-active-bg-color: hsl(var(--primary));
+  --fc-button-active-border-color: hsl(var(--primary));
+  --fc-event-bg-color: hsl(var(--primary));
+  --fc-event-border-color: hsl(var(--primary));
+  --fc-event-text-color: hsl(var(--primary-foreground));
+}
+
+/* Calendar container */
+.fc.fc-theme-standard {
+  @apply rounded-xl overflow-hidden;
+  background: hsl(var(--card));
+}
+
+/* Toolbar */
+.fc .fc-toolbar {
+  @apply mb-4 flex-wrap gap-3 px-4 pt-4;
+}
+
+.fc .fc-toolbar-title {
+  @apply text-lg font-semibold;
+  color: hsl(var(--foreground));
+}
+
+/* Buttons */
+.fc .fc-button {
+  @apply font-medium rounded-lg px-3 py-2 text-xs border-0;
+  text-transform: capitalize !important;
+  transition: all 0.2s ease;
+}
+
+.fc .fc-button:focus {
+  @apply outline-none ring-2 ring-offset-2;
+  --tw-ring-color: hsl(var(--ring));
+  --tw-ring-offset-color: hsl(var(--card));
+}
+
+.fc .fc-button:hover {
+  transform: translateY(-1px);
+}
+
+.fc .fc-button-primary:disabled {
+  @apply opacity-40 cursor-not-allowed;
+  transform: none;
+}
+
+/* Today button - Gold accent */
+.fc .fc-today-button {
+  background: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
+  font-weight: 600 !important;
+}
+
+.fc .fc-today-button:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+/* Button groups */
+.fc .fc-button-group {
+  @apply rounded-lg overflow-hidden;
+  box-shadow: 0 1px 3px hsl(var(--shadow-color) / 0.1);
+}
+
+.fc .fc-button-group > .fc-button {
+  @apply rounded-none first:rounded-l-lg last:rounded-r-lg;
+}
+
+/* Column headers */
+.fc .fc-col-header {
+  background: hsl(var(--muted));
+}
+
+.fc .fc-col-header-cell {
+  @apply py-3 font-semibold text-xs uppercase tracking-wide;
+  color: hsl(var(--foreground-secondary));
+  border-bottom: 1px solid hsl(var(--border)) !important;
+}
+
+/* Day cells */
+.fc .fc-daygrid-day {
+  transition: background-color 0.15s ease;
+}
+
+.fc .fc-daygrid-day:hover {
+  background: hsl(var(--muted) / 0.5) !important;
+}
+
+.fc .fc-daygrid-day-frame {
+  @apply min-h-[100px] p-2;
+}
+
+.fc .fc-daygrid-day-number {
+  @apply font-semibold text-sm p-1.5;
+  color: hsl(var(--foreground-secondary));
+}
+
+/* Today highlight */
+.fc .fc-day-today {
+  background: hsl(var(--accent-subtle)) !important;
+}
+
+.fc .fc-day-today .fc-daygrid-day-number {
+  background: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
+  font-weight: 700 !important;
+  @apply rounded-full w-7 h-7 flex items-center justify-center text-xs;
+}
+
+/* Past days */
+.fc .fc-day-past {
+  background: hsl(var(--muted) / 0.3) !important;
+}
+
+.fc .fc-day-past .fc-daygrid-day-number {
+  color: hsl(var(--foreground-muted)) !important;
+}
+
+/* Events */
+.fc .fc-event {
+  @apply rounded-md border-0 px-2 py-1 text-xs font-medium cursor-pointer;
+  background: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.fc .fc-event:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px hsl(var(--shadow-color) / 0.15);
+}
+
+/* Time grid */
+.fc .fc-timegrid-slot {
+  height: 24px !important;
+  border-color: hsl(var(--border) / 0.5) !important;
+}
+
+.fc .fc-timegrid-slot-minor {
+  border-top-style: dotted !important;
+}
+
+.fc .fc-timegrid-slot-label {
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  color: hsl(var(--foreground-muted)) !important;
+  width: 60px !important;
+}
+
+.fc .fc-timegrid-axis {
+  border-right: 1px solid hsl(var(--border)) !important;
+  background: hsl(var(--muted) / 0.5);
+  width: 60px !important;
+}
+
+/* Now indicator - Gold line */
+.fc .fc-timegrid-now-indicator-line {
+  border-color: hsl(var(--accent)) !important;
+  border-width: 2px !important;
+  box-shadow: 0 0 8px hsl(var(--accent) / 0.5);
+}
+
+.fc .fc-timegrid-now-indicator-arrow {
+  border-color: hsl(var(--accent)) !important;
+}
+
+/* Time grid events */
+.fc .fc-timegrid-event {
+  border-left: 3px solid hsl(var(--accent)) !important;
+  border-radius: 6px !important;
+  background: hsl(var(--primary)) !important;
+  margin: 1px 2px !important;
+}
+
+/* Selection highlight */
+.fc .fc-highlight {
+  background: hsl(var(--primary) / 0.15) !important;
+  border: 2px dashed hsl(var(--primary) / 0.4) !important;
+  border-radius: 8px !important;
+}
+
+/* Table borders */
+.fc-theme-standard td,
+.fc-theme-standard th {
+  border-color: hsl(var(--border)) !important;
+}
+
+.fc-theme-standard .fc-scrollgrid {
+  border: 1px solid hsl(var(--border)) !important;
+  @apply rounded-lg overflow-hidden;
+}
+
+/* Popover */
+.fc .fc-popover {
+  @apply rounded-xl;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 10px 40px hsl(var(--shadow-color) / 0.2);
+}
+
+.fc .fc-popover-header {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  @apply rounded-t-xl px-5 py-4 font-bold;
+}
+
+/* More events link */
+.fc .fc-daygrid-more-link {
+  background: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
+  @apply font-semibold rounded-lg px-2 py-1;
+  transition: transform 0.15s ease;
+}
+
+.fc .fc-daygrid-more-link:hover {
+  transform: scale(1.05);
+}
+
+/* Scrollbar */
+.fc ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.fc ::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 4px;
+}
+
+.fc ::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary) / 0.5);
+  border-radius: 4px;
+}
+
+.fc ::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.7);
+}
+
+/* =====================================================
+   FC WRAPPER - Custom header hidden styles
+   ===================================================== */
+
+.fc-wrapper .fc .fc-toolbar {
+  display: none !important;
+}
+
+.fc-wrapper .fc.fc-theme-standard {
+  @apply bg-transparent rounded-none;
+}
+
+.fc-wrapper .fc-theme-standard .fc-scrollgrid {
+  border: none !important;
+}
+
+.fc-wrapper .fc .fc-timegrid-slot-label {
+  color: hsl(var(--foreground-muted)) !important;
+  padding-right: 12px !important;
+}
+
+.fc-wrapper .fc .fc-day-today {
+  background: hsl(var(--accent-subtle) / 0.5) !important;
+}
+
+/* =====================================================
+   RESPONSIVE ADJUSTMENTS
+   ===================================================== */
+
+@media (max-width: 768px) {
+  .fc .fc-toolbar {
+    @apply flex-col gap-4;
+  }
+
+  .fc .fc-toolbar-title {
+    @apply text-xl;
+  }
+
+  .fc .fc-toolbar-chunk {
+    @apply w-full justify-center;
+  }
+
+  .fc .fc-button-group {
+    @apply w-full;
+  }
+
+  .fc .fc-button-group > .fc-button {
+    @apply flex-1;
+  }
+}
+
+/* =====================================================
+   CUSTOM SCROLLBAR - Global
+   ===================================================== */
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--foreground-muted));
+}
+
+/* =====================================================
+   ANIMATIONS
+   ===================================================== */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s ease-out;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.2s ease-out;
+}
+
+/* Loading skeleton shimmer */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 25%,
+    hsl(var(--muted) / 0.5) 50%,
+    hsl(var(--muted)) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}

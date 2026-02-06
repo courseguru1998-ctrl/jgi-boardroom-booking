@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Booking Reminder</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: #f59e0b; color: white; padding: 20px; border-radius: 8px 8px 0 0; }
+    .content { background: #f8fafc; padding: 20px; border-radius: 0 0 8px 8px; }
+    .details { background: white; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .details-row { display: flex; padding: 8px 0; border-bottom: 1px solid #e2e8f0; }
+    .details-row:last-child { border-bottom: none; }
+    .label { font-weight: 600; width: 100px; color: #64748b; }
+    .value { color: #1e293b; }
+    .footer { text-align: center; margin-top: 20px; color: #64748b; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1 style="margin: 0;">Upcoming Booking Reminder</h1>
+  </div>
+  <div class="content">
+    <p>Hello {{userName}},</p>
+    <p>This is a reminder for your upcoming room booking{{#if reminderTime}} in {{reminderTime}}{{/if}}:</p>
+
+    <div class="details">
+      <div class="details-row">
+        <span class="label">Room</span>
+        <span class="value">{{roomName}}</span>
+      </div>
+      <div class="details-row">
+        <span class="label">Title</span>
+        <span class="value">{{title}}</span>
+      </div>
+      <div class="details-row">
+        <span class="label">Date</span>
+        <span class="value">{{date}}</span>
+      </div>
+      <div class="details-row">
+        <span class="label">Time</span>
+        <span class="value">{{startTime}} - {{endTime}}</span>
+      </div>
+    </div>
+
+    <p>Please ensure you arrive on time.</p>
+  </div>
+  <div class="footer">
+    <p>Boardroom Booking System</p>
+  </div>
+</body>
+</html>

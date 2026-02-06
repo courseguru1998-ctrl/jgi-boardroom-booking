@@ -1,0 +1,195 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  firstName    String   @map("first_name")
+  lastName     String   @map("last_name")
+  role         String   @default("USER")
+  department   String?
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  bookings       Booking[]
+  refreshTokens  RefreshToken[]
+  calendarSyncs  CalendarSync[]
+  attendances    BookingAttendee[]
+  auditLogs      AuditLog[]
+  checkIns       BookingCheckIn[]
+  waitlistEntries WaitlistEntry[]
+
+  @@map("users")
+}
+
+model Room {
+  id        String   @id @default(uuid())
+  name      String
+  capacity  Int
+  floor     String?
+  building  String?
+  amenities String   @default("[]")
+  isActive  Boolean  @default(true) @map("is_active")
+  imageUrl  String?  @map("image_url")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  bookings       Booking[]
+  waitlistEntries WaitlistEntry[]
+
+  @@map("rooms")
+}
+
+model Booking {
+  id               String   @id @default(uuid())
+  userId           String   @map("user_id")
+  roomId           String   @map("room_id")
+  title            String
+  description      String?
+  startTime        DateTime @map("start_time")
+  endTime          DateTime @map("end_time")
+  status           String   @default("CONFIRMED")
+  recurrenceRule   String?  @map("recurrence_rule")
+  parentId         String?  @map("parent_id")
+  googleEventId    String?  @map("google_event_id")
+  microsoftEventId String?  @map("microsoft_event_id")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room      Room              @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  parent    Booking?          @relation("RecurringBookings", fields: [parentId], references: [id], onDelete: Cascade)
+  instances Booking[]         @relation("RecurringBookings")
+  attendees BookingAttendee[]
+  emailLogs EmailLog[]
+  checkIns  BookingCheckIn[]
+
+  @@index([userId])
+  @@index([roomId])
+  @@index([startTime, endTime])
+  @@index([parentId])
+  @@map("bookings")
+}
+
+model BookingAttendee {
+  id        String   @id @default(uuid())
+  bookingId String   @map("booking_id")
+  userId    String?  @map("user_id")
+  email     String
+  name      String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@unique([bookingId, email])
+  @@map("booking_attendees")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+model CalendarSync {
+  id           String    @id @default(uuid())
+  userId       String    @map("user_id")
+  provider     String
+  accessToken  String    @map("access_token")
+  refreshToken String?   @map("refresh_token")
+  expiresAt    DateTime? @map("expires_at")
+  calendarId   String?   @map("calendar_id")
+  isActive     Boolean   @default(true) @map("is_active")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider])
+  @@map("calendar_syncs")
+}
+
+model EmailLog {
+  id        String   @id @default(uuid())
+  bookingId String?  @map("booking_id")
+  to        String
+  subject   String
+  template  String
+  status    String
+  error     String?
+  sentAt    DateTime @default(now()) @map("sent_at")
+
+  booking Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  @@index([bookingId])
+  @@map("email_logs")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?  @map("user_id")
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String?  @map("entity_id")
+  oldValue   String?  @map("old_value")
+  newValue   String?  @map("new_value")
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model BookingCheckIn {
+  id          String   @id @default(uuid())
+  bookingId   String   @map("booking_id")
+  userId      String   @map("user_id")
+  checkedInAt DateTime @default(now()) @map("checked_in_at")
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([bookingId, userId])
+  @@index([bookingId])
+  @@map("booking_checkins")
+}
+
+model WaitlistEntry {
+  id        String   @id @default(uuid())
+  roomId    String   @map("room_id")
+  userId    String   @map("user_id")
+  startTime DateTime @map("start_time")
+  endTime   DateTime @map("end_time")
+  status    String   @default("WAITING") // WAITING, NOTIFIED, BOOKED, EXPIRED
+  createdAt DateTime @default(now()) @map("created_at")
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([roomId, startTime, endTime])
+  @@index([userId])
+  @@map("waitlist_entries")
+}
