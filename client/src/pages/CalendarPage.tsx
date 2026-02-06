@@ -9,7 +9,6 @@ import {
   isSameMonth,
   isSameDay,
   isToday,
-  isPast,
   isBefore,
   addMonths,
   subMonths,
