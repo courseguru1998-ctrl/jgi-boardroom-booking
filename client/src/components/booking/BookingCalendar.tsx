@@ -5,7 +5,7 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { useQuery } from '@tanstack/react-query';
 import { bookingsApi } from '@/services/bookings';
-import { format, startOfMonth, endOfMonth } from 'date-fns';
+import { format, startOfMonth, endOfMonth, startOfDay, isBefore } from 'date-fns';
 import { Plus, ChevronLeft, ChevronRight, LayoutGrid, Calendar, Clock } from 'lucide-react';
 import { BookingModal } from './BookingModal';
 import { Button } from '@/components/common/Button';
@@ -144,7 +144,13 @@ export function BookingCalendar({ roomId, selectedDate }: BookingCalendarProps) 
 
   const handlePrev = () => {
     if (calendarRef.current) {
-      calendarRef.current.getApi().prev();
+      const api = calendarRef.current.getApi();
+      const currentStart = api.view.currentStart;
+      // Only allow going back if we won't go entirely into the past
+      const today = startOfDay(new Date());
+      if (!isBefore(currentStart, today)) {
+        api.prev();
+      }
     }
   };
 
@@ -319,6 +325,13 @@ export function BookingCalendar({ roomId, selectedDate }: BookingCalendarProps) 
               daysOfWeek: [1, 2, 3, 4, 5],
               startTime: '09:00',
               endTime: '18:00',
+            }}
+            validRange={{
+              start: format(new Date(), 'yyyy-MM-dd'),
+            }}
+            selectAllow={(selectInfo) => {
+              // Only allow selecting future dates/times
+              return selectInfo.start >= new Date();
             }}
           />
         </div>

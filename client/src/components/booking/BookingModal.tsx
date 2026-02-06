@@ -27,9 +27,19 @@ const bookingSchema = z.object({
   roomId: z.string().min(1, 'Room is required'),
   title: z.string().min(1, 'Title is required').max(200),
   description: z.string().max(2000).optional(),
-  startTime: z.string().min(1, 'Start time is required'),
+  startTime: z.string().min(1, 'Start time is required').refine((val) => {
+    const date = new Date(val);
+    return date >= new Date(new Date().setSeconds(0, 0));
+  }, 'Start time must be in the future'),
   endTime: z.string().min(1, 'End time is required'),
   attendees: z.string().optional(),
+}).refine((data) => {
+  const start = new Date(data.startTime);
+  const end = new Date(data.endTime);
+  return end > start;
+}, {
+  message: 'End time must be after start time',
+  path: ['endTime'],
 });
 
 type BookingFormData = z.infer<typeof bookingSchema>;
@@ -262,7 +272,8 @@ export function BookingModal({
               <Input
                 id="startTime"
                 type="datetime-local"
-                disabled={!canEdit}
+                disabled={!canEdit || isEditing}
+                min={format(new Date(), "yyyy-MM-dd'T'HH:mm")}
                 error={errors.startTime?.message}
                 {...register('startTime')}
               />
@@ -276,7 +287,8 @@ export function BookingModal({
               <Input
                 id="endTime"
                 type="datetime-local"
-                disabled={!canEdit}
+                disabled={!canEdit || isEditing}
+                min={format(new Date(), "yyyy-MM-dd'T'HH:mm")}
                 error={errors.endTime?.message}
                 {...register('endTime')}
               />
