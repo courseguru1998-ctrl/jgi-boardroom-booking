@@ -76,8 +76,7 @@ app.post('/api/v1/auth/login', async (req, res) => {
       success: true,
       data: {
         user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role, department: user.department },
-        accessToken,
-        refreshToken,
+        tokens: { accessToken, refreshToken },
       },
     });
   } catch (error) {
@@ -111,8 +110,7 @@ app.post('/api/v1/auth/register', async (req, res) => {
       success: true,
       data: {
         user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role, department: user.department },
-        accessToken,
-        refreshToken,
+        tokens: { accessToken, refreshToken },
       },
     });
   } catch (error) {
