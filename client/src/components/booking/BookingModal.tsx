@@ -27,19 +27,9 @@ const bookingSchema = z.object({
   roomId: z.string().min(1, 'Room is required'),
   title: z.string().min(1, 'Title is required').max(200),
   description: z.string().max(2000).optional(),
-  startTime: z.string().min(1, 'Start time is required').refine((val) => {
-    const date = new Date(val);
-    return date >= new Date(new Date().setSeconds(0, 0));
-  }, 'Start time must be in the future'),
+  startTime: z.string().min(1, 'Start time is required'),
   endTime: z.string().min(1, 'End time is required'),
   attendees: z.string().optional(),
-}).refine((data) => {
-  const start = new Date(data.startTime);
-  const end = new Date(data.endTime);
-  return end > start;
-}, {
-  message: 'End time must be after start time',
-  path: ['endTime'],
 });
 
 type BookingFormData = z.infer<typeof bookingSchema>;

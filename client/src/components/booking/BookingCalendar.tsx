@@ -327,11 +327,7 @@ export function BookingCalendar({ roomId, selectedDate }: BookingCalendarProps) 
               endTime: '18:00',
             }}
             validRange={{
-              start: format(new Date(), 'yyyy-MM-dd'),
-            }}
-            selectAllow={(selectInfo) => {
-              // Only allow selecting future dates/times
-              return selectInfo.start >= new Date();
+              start: new Date().toISOString().split('T')[0],
             }}
           />
         </div>
