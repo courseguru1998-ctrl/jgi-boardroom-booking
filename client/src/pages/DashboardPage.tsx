@@ -327,7 +327,7 @@ export function DashboardPage() {
                                     {format(new Date(booking.endTime), 'h:mm a')}
                                   </span>
                                 </div>
-                                {booking.attendees.length > 0 && (
+                                {booking.attendees?.length > 0 && (
                                   <div className="flex items-center gap-1 mt-2 text-xs text-foreground-muted">
                                     <Users className="h-3.5 w-3.5" />
                                     {booking.attendees.length} attendee{booking.attendees.length > 1 ? 's' : ''}

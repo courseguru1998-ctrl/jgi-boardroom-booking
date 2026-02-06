@@ -332,7 +332,7 @@ export function MyBookingsPage() {
                                         {format(new Date(booking.endTime), 'h:mm a')}
                                       </span>
                                     </div>
-                                    {booking.attendees.length > 0 && (
+                                    {booking.attendees?.length > 0 && (
                                       <div className="flex items-center gap-1.5">
                                         <Users className="h-4 w-4" />
                                         <span>

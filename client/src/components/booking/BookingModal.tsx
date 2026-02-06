@@ -75,7 +75,7 @@ export function BookingModal({
         description: booking.description || '',
         startTime: format(new Date(booking.startTime), "yyyy-MM-dd'T'HH:mm"),
         endTime: format(new Date(booking.endTime), "yyyy-MM-dd'T'HH:mm"),
-        attendees: booking.attendees.map((a) => a.email).join(', '),
+        attendees: booking.attendees?.map((a) => a.email).join(', ') || '',
       });
     } else if (defaultValues) {
       reset({

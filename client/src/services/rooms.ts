@@ -55,7 +55,7 @@ export const roomsApi = {
   },
 
   create: async (data: CreateRoomData): Promise<ApiResponse<Room>> => {
-    const response = await api.post('/rooms', data);
+    const response = await api.post('/admin/rooms', data);
     return response.data;
   },
 
@@ -63,12 +63,12 @@ export const roomsApi = {
     id: string,
     data: Partial<CreateRoomData>
   ): Promise<ApiResponse<Room>> => {
-    const response = await api.patch(`/rooms/${id}`, data);
+    const response = await api.patch(`/admin/rooms/${id}`, data);
     return response.data;
   },
 
   delete: async (id: string): Promise<ApiResponse<null>> => {
-    const response = await api.delete(`/rooms/${id}`);
+    const response = await api.patch(`/admin/rooms/${id}`, { isActive: false });
     return response.data;
   },
 };

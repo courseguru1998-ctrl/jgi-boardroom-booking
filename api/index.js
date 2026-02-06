@@ -192,7 +192,11 @@ app.get('/api/v1/bookings', authenticate, async (req, res) => {
 
     const bookings = await prisma.booking.findMany({
       where,
-      include: { room: true, user: { select: { id: true, firstName: true, lastName: true, email: true } } },
+      include: {
+        room: true,
+        user: { select: { id: true, firstName: true, lastName: true, email: true } },
+        attendees: { select: { id: true, email: true, name: true } }
+      },
       orderBy: { startTime: 'asc' },
     });
 
@@ -207,7 +211,10 @@ app.get('/api/v1/bookings/my', authenticate, async (req, res) => {
   try {
     const bookings = await prisma.booking.findMany({
       where: { userId: req.user.id },
-      include: { room: true },
+      include: {
+        room: true,
+        attendees: { select: { id: true, email: true, name: true } }
+      },
       orderBy: { startTime: 'desc' },
     });
     res.json({ success: true, data: bookings });
@@ -245,7 +252,11 @@ app.post('/api/v1/bookings', authenticate, async (req, res) => {
         endTime: new Date(endTime),
         status: 'CONFIRMED',
       },
-      include: { room: true, user: { select: { id: true, firstName: true, lastName: true, email: true } } },
+      include: {
+        room: true,
+        user: { select: { id: true, firstName: true, lastName: true, email: true } },
+        attendees: { select: { id: true, email: true, name: true } }
+      },
     });
 
     // Add attendees if provided
@@ -274,7 +285,10 @@ app.patch('/api/v1/bookings/:id/cancel', authenticate, async (req, res) => {
     const updated = await prisma.booking.update({
       where: { id: req.params.id },
       data: { status: 'CANCELLED' },
-      include: { room: true },
+      include: {
+        room: true,
+        attendees: { select: { id: true, email: true, name: true } }
+      },
     });
 
     res.json({ success: true, data: updated });
@@ -324,6 +338,386 @@ app.get('/api/v1/admin/analytics', authenticate, async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to fetch analytics' });
+  }
+});
+
+// DELETE booking (cancel via DELETE)
+app.delete('/api/v1/bookings/:id', authenticate, async (req, res) => {
+  try {
+    const booking = await prisma.booking.findUnique({ where: { id: req.params.id } });
+
+    if (!booking) return res.status(404).json({ success: false, message: 'Booking not found' });
+    if (booking.userId !== req.user.id && req.user.role !== 'ADMIN') {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+    }
+
+    const updated = await prisma.booking.update({
+      where: { id: req.params.id },
+      data: { status: 'CANCELLED' },
+      include: {
+        room: true,
+        attendees: { select: { id: true, email: true, name: true } }
+      },
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to cancel booking' });
+  }
+});
+
+// GET single booking
+app.get('/api/v1/bookings/:id', authenticate, async (req, res) => {
+  try {
+    const booking = await prisma.booking.findUnique({
+      where: { id: req.params.id },
+      include: {
+        room: true,
+        user: { select: { id: true, firstName: true, lastName: true, email: true } },
+        attendees: { select: { id: true, email: true, name: true } }
+      },
+    });
+
+    if (!booking) return res.status(404).json({ success: false, message: 'Booking not found' });
+    res.json({ success: true, data: booking });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch booking' });
+  }
+});
+
+// WAITLIST ROUTES
+app.get('/api/v1/waitlist/my', authenticate, async (req, res) => {
+  try {
+    const entries = await prisma.waitlistEntry.findMany({
+      where: { userId: req.user.id, status: 'WAITING' },
+      include: { room: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json({ success: true, data: entries });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch waitlist' });
+  }
+});
+
+app.post('/api/v1/waitlist', authenticate, async (req, res) => {
+  try {
+    const { roomId, startTime, endTime } = req.body;
+    const entry = await prisma.waitlistEntry.create({
+      data: {
+        userId: req.user.id,
+        roomId,
+        startTime: new Date(startTime),
+        endTime: new Date(endTime),
+        status: 'WAITING',
+      },
+      include: { room: true },
+    });
+    res.status(201).json({ success: true, data: entry });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to join waitlist' });
+  }
+});
+
+app.delete('/api/v1/waitlist/:id', authenticate, async (req, res) => {
+  try {
+    const entry = await prisma.waitlistEntry.findUnique({ where: { id: req.params.id } });
+    if (!entry) return res.status(404).json({ success: false, message: 'Entry not found' });
+    if (entry.userId !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+    }
+    await prisma.waitlistEntry.delete({ where: { id: req.params.id } });
+    res.json({ success: true, message: 'Removed from waitlist' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to remove from waitlist' });
+  }
+});
+
+// EXPORT ROUTES (simplified - returns JSON for now, PDF generation would need additional libraries)
+app.get('/api/v1/export/booking/:id/pdf', authenticate, async (req, res) => {
+  try {
+    const booking = await prisma.booking.findUnique({
+      where: { id: req.params.id },
+      include: {
+        room: true,
+        user: { select: { firstName: true, lastName: true, email: true } },
+        attendees: { select: { email: true, name: true } },
+      },
+    });
+
+    if (!booking) return res.status(404).json({ success: false, message: 'Booking not found' });
+
+    // Generate simple text-based PDF content
+    const content = `
+BOOKING CONFIRMATION
+====================
+
+Title: ${booking.title}
+Room: ${booking.room.name}
+Date: ${new Date(booking.startTime).toLocaleDateString()}
+Time: ${new Date(booking.startTime).toLocaleTimeString()} - ${new Date(booking.endTime).toLocaleTimeString()}
+Status: ${booking.status}
+
+Organizer: ${booking.user.firstName} ${booking.user.lastName} (${booking.user.email})
+
+${booking.description ? `Description: ${booking.description}` : ''}
+
+${booking.attendees.length > 0 ? `Attendees: ${booking.attendees.map(a => a.email).join(', ')}` : ''}
+
+---
+Generated by JGI Boardroom Booking System
+    `.trim();
+
+    res.setHeader('Content-Type', 'text/plain');
+    res.setHeader('Content-Disposition', `attachment; filename="booking-${booking.id}.txt"`);
+    res.send(content);
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to generate export' });
+  }
+});
+
+app.get('/api/v1/export/bookings/excel', authenticate, async (req, res) => {
+  try {
+    const { startDate, endDate, roomId, status } = req.query;
+    const where = {};
+    if (roomId) where.roomId = roomId;
+    if (status) where.status = status;
+    if (startDate && endDate) {
+      where.startTime = { gte: new Date(startDate) };
+      where.endTime = { lte: new Date(endDate) };
+    }
+
+    const bookings = await prisma.booking.findMany({
+      where,
+      include: {
+        room: true,
+        user: { select: { firstName: true, lastName: true, email: true } },
+      },
+      orderBy: { startTime: 'asc' },
+    });
+
+    // Generate CSV content (Excel can open CSV)
+    const header = 'Title,Room,Start Time,End Time,Status,Organizer,Email\n';
+    const rows = bookings.map(b =>
+      `"${b.title}","${b.room.name}","${new Date(b.startTime).toISOString()}","${new Date(b.endTime).toISOString()}","${b.status}","${b.user.firstName} ${b.user.lastName}","${b.user.email}"`
+    ).join('\n');
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="bookings-${new Date().toISOString().split('T')[0]}.csv"`);
+    res.send(header + rows);
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to generate export' });
+  }
+});
+
+app.get('/api/v1/export/bookings/csv', authenticate, async (req, res) => {
+  try {
+    const { startDate, endDate, roomId, status } = req.query;
+    const where = {};
+    if (roomId) where.roomId = roomId;
+    if (status) where.status = status;
+    if (startDate && endDate) {
+      where.startTime = { gte: new Date(startDate) };
+      where.endTime = { lte: new Date(endDate) };
+    }
+
+    const bookings = await prisma.booking.findMany({
+      where,
+      include: {
+        room: true,
+        user: { select: { firstName: true, lastName: true, email: true } },
+      },
+      orderBy: { startTime: 'asc' },
+    });
+
+    const header = 'Title,Room,Start Time,End Time,Status,Organizer,Email\n';
+    const rows = bookings.map(b =>
+      `"${b.title}","${b.room.name}","${new Date(b.startTime).toISOString()}","${new Date(b.endTime).toISOString()}","${b.status}","${b.user.firstName} ${b.user.lastName}","${b.user.email}"`
+    ).join('\n');
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="bookings-${new Date().toISOString().split('T')[0]}.csv"`);
+    res.send(header + rows);
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to generate export' });
+  }
+});
+
+// ADMIN: Create/Update Room
+app.post('/api/v1/admin/rooms', authenticate, async (req, res) => {
+  if (req.user.role !== 'ADMIN') {
+    return res.status(403).json({ success: false, message: 'Admin access required' });
+  }
+
+  try {
+    const { name, capacity, floor, building, amenities, imageUrl } = req.body;
+    const room = await prisma.room.create({
+      data: {
+        name,
+        capacity: parseInt(capacity),
+        floor,
+        building,
+        amenities: JSON.stringify(amenities || []),
+        imageUrl,
+      },
+    });
+    res.status(201).json({ success: true, data: { ...room, amenities: JSON.parse(room.amenities) } });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to create room' });
+  }
+});
+
+app.patch('/api/v1/admin/rooms/:id', authenticate, async (req, res) => {
+  if (req.user.role !== 'ADMIN') {
+    return res.status(403).json({ success: false, message: 'Admin access required' });
+  }
+
+  try {
+    const { name, capacity, floor, building, amenities, imageUrl, isActive } = req.body;
+    const data = {};
+    if (name !== undefined) data.name = name;
+    if (capacity !== undefined) data.capacity = parseInt(capacity);
+    if (floor !== undefined) data.floor = floor;
+    if (building !== undefined) data.building = building;
+    if (amenities !== undefined) data.amenities = JSON.stringify(amenities);
+    if (imageUrl !== undefined) data.imageUrl = imageUrl;
+    if (isActive !== undefined) data.isActive = isActive;
+
+    const room = await prisma.room.update({
+      where: { id: req.params.id },
+      data,
+    });
+    res.json({ success: true, data: { ...room, amenities: JSON.parse(room.amenities || '[]') } });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to update room' });
+  }
+});
+
+// CHECK-IN ROUTES
+app.post('/api/v1/checkins', authenticate, async (req, res) => {
+  try {
+    const { bookingId } = req.body;
+
+    // Check if booking exists and user is authorized
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: { attendees: true },
+    });
+
+    if (!booking) {
+      return res.status(404).json({ success: false, message: 'Booking not found' });
+    }
+
+    // Check if already checked in
+    const existing = await prisma.bookingCheckIn.findUnique({
+      where: { bookingId_userId: { bookingId, userId: req.user.id } },
+    });
+
+    if (existing) {
+      return res.status(400).json({ success: false, message: 'Already checked in' });
+    }
+
+    const checkIn = await prisma.bookingCheckIn.create({
+      data: {
+        bookingId,
+        userId: req.user.id,
+      },
+      include: {
+        user: { select: { id: true, firstName: true, lastName: true, email: true } },
+      },
+    });
+
+    res.status(201).json({ success: true, data: checkIn });
+  } catch (error) {
+    console.error('Check-in error:', error);
+    res.status(500).json({ success: false, message: 'Failed to check in' });
+  }
+});
+
+app.get('/api/v1/checkins/booking/:bookingId', authenticate, async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        checkIns: {
+          include: { user: { select: { id: true, firstName: true, lastName: true, email: true } } },
+        },
+        attendees: true,
+      },
+    });
+
+    if (!booking) {
+      return res.status(404).json({ success: false, message: 'Booking not found' });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        bookingId,
+        totalExpected: (booking.attendees?.length || 0) + 1, // attendees + organizer
+        totalCheckedIn: booking.checkIns.length,
+        checkIns: booking.checkIns.map((c) => ({
+          id: c.id,
+          checkedInAt: c.checkedInAt,
+          user: c.user,
+        })),
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to get check-in status' });
+  }
+});
+
+app.get('/api/v1/checkins/booking/:bookingId/me', authenticate, async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+
+    const checkIn = await prisma.bookingCheckIn.findUnique({
+      where: { bookingId_userId: { bookingId, userId: req.user.id } },
+    });
+
+    res.json({ success: true, data: { isCheckedIn: !!checkIn } });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to check status' });
+  }
+});
+
+app.get('/api/v1/checkins/my/today', authenticate, async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const checkIns = await prisma.bookingCheckIn.findMany({
+      where: {
+        userId: req.user.id,
+        checkedInAt: { gte: today, lt: tomorrow },
+      },
+      include: {
+        booking: {
+          include: { room: { select: { name: true } } },
+        },
+      },
+    });
+
+    res.json({
+      success: true,
+      data: checkIns.map((c) => ({
+        id: c.id,
+        checkedInAt: c.checkedInAt,
+        booking: {
+          id: c.booking.id,
+          title: c.booking.title,
+          roomName: c.booking.room.name,
+          startTime: c.booking.startTime,
+          endTime: c.booking.endTime,
+        },
+      })),
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to get check-ins' });
   }
 });
 
