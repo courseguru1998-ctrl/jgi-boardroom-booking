@@ -35,3 +35,4 @@ server/prisma/*.db-journal
 
 # Misc
 *.tsbuildinfo
+.vercel
