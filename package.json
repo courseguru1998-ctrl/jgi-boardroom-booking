@@ -22,6 +22,7 @@
     "lint": "npm run lint -w server && npm run lint -w client"
   },
   "devDependencies": {
+    "@vercel/node": "^5.5.32",
     "concurrently": "^8.2.2"
   },
   "engines": {

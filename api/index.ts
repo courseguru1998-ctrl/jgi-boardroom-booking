@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { IncomingMessage, ServerResponse } from 'http';
 import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -71,7 +71,7 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 });
 
 // Vercel serverless handler
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: IncomingMessage, res: ServerResponse) {
   await loadRoutes();
   return new Promise<void>((resolve) => {
     app(req as unknown as Request, res as unknown as Response, () => {
