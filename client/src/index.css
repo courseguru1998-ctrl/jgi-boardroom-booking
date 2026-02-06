@@ -314,13 +314,32 @@
   @apply rounded-full w-7 h-7 flex items-center justify-center text-xs;
 }
 
-/* Past days */
+/* Past days - disabled and greyed out */
 .fc .fc-day-past {
-  background: hsl(var(--muted) / 0.3) !important;
+  background: hsl(var(--muted) / 0.5) !important;
+  pointer-events: none !important;
+  cursor: not-allowed !important;
+  opacity: 0.4 !important;
 }
 
 .fc .fc-day-past .fc-daygrid-day-number {
   color: hsl(var(--foreground-muted)) !important;
+  text-decoration: line-through !important;
+}
+
+.fc .fc-day-past .fc-timegrid-col {
+  pointer-events: none !important;
+}
+
+/* Prevent selection on past time slots */
+.fc .fc-timegrid-col.fc-day-past {
+  background: repeating-linear-gradient(
+    45deg,
+    hsl(var(--muted) / 0.3),
+    hsl(var(--muted) / 0.3) 10px,
+    hsl(var(--muted) / 0.5) 10px,
+    hsl(var(--muted) / 0.5) 20px
+  ) !important;
 }
 
 /* Events */
