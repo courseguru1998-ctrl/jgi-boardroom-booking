@@ -163,29 +163,42 @@ export function BookingCalendar({ roomId, selectedDate }: BookingCalendarProps) 
     }
   };
 
-  // Prevent selecting past dates/times - THIS IS THE KEY FIX
-  const selectAllow = useCallback((selectInfo: { start: Date; end: Date }) => {
-    const today = getTodayStart();
-    return !isBefore(selectInfo.start, today);
+  // Block selecting past dates - works for ALL views
+  const selectAllow = useCallback((selectInfo: { start: Date }) => {
+    return selectInfo.start >= getTodayStart();
   }, []);
 
-  // Add custom class to past day cells for styling
-  const dayCellClassNames = useCallback((arg: { date: Date }) => {
-    const today = getTodayStart();
-    if (isBefore(arg.date, today)) {
-      return ['fc-day-disabled', 'past-date-cell'];
-    }
-    return [];
-  }, []);
-
-  // Style past cells after they mount
+  // For MONTH view - style past day cells
   const dayCellDidMount = useCallback((arg: { date: Date; el: HTMLElement }) => {
-    const today = getTodayStart();
-    if (isBefore(arg.date, today)) {
-      arg.el.style.backgroundColor = 'rgba(156, 163, 175, 0.3)';
+    if (arg.date < getTodayStart()) {
+      arg.el.style.backgroundColor = '#e5e7eb';
       arg.el.style.pointerEvents = 'none';
+      arg.el.style.opacity = '0.4';
+    }
+  }, []);
+
+  // For WEEK/DAY view - style past time slot columns
+  const slotLaneDidMount = useCallback((arg: { el: HTMLElement }) => {
+    // Get the date from the parent column
+    const col = arg.el.closest('[data-date]') as HTMLElement;
+    if (col) {
+      const dateStr = col.getAttribute('data-date');
+      if (dateStr) {
+        const cellDate = new Date(dateStr);
+        if (cellDate < getTodayStart()) {
+          arg.el.style.backgroundColor = '#e5e7eb';
+          arg.el.style.pointerEvents = 'none';
+        }
+      }
+    }
+  }, []);
+
+  // For WEEK/DAY view - style past day headers
+  const dayHeaderDidMount = useCallback((arg: { date: Date; el: HTMLElement }) => {
+    if (arg.date < getTodayStart()) {
+      arg.el.style.backgroundColor = '#d1d5db';
       arg.el.style.opacity = '0.5';
-      arg.el.style.cursor = 'not-allowed';
+      arg.el.style.textDecoration = 'line-through';
     }
   }, []);
 
@@ -359,8 +372,9 @@ export function BookingCalendar({ roomId, selectedDate }: BookingCalendarProps) 
               start: new Date().toISOString().split('T')[0],
             }}
             selectAllow={selectAllow}
-            dayCellClassNames={dayCellClassNames}
             dayCellDidMount={dayCellDidMount}
+            slotLaneDidMount={slotLaneDidMount}
+            dayHeaderDidMount={dayHeaderDidMount}
           />
         </div>
 
