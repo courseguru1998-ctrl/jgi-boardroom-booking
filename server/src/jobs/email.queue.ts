@@ -3,7 +3,10 @@ import { getRedis } from '../config/redis.js';
 
 const connection = getRedis();
 
-export const emailQueueInstance = new Queue('email', { connection });
+// Only create queue if Redis is available
+export const emailQueueInstance = connection
+  ? new Queue('email', { connection })
+  : null;
 
 interface BookingEmailData {
   bookingId: string;
@@ -39,6 +42,10 @@ interface ReminderEmailData {
 
 export const emailQueue = {
   async addBookingConfirmation(data: BookingEmailData) {
+    if (!emailQueueInstance) {
+      console.log('Email queue not available, skipping:', data);
+      return;
+    }
     await emailQueueInstance.add('booking-confirmation', data, {
       attempts: 3,
       backoff: {
@@ -49,6 +56,10 @@ export const emailQueue = {
   },
 
   async addBookingCancellation(data: BookingEmailData) {
+    if (!emailQueueInstance) {
+      console.log('Email queue not available, skipping:', data);
+      return;
+    }
     await emailQueueInstance.add('booking-cancellation', data, {
       attempts: 3,
       backoff: {
@@ -59,6 +70,10 @@ export const emailQueue = {
   },
 
   async addAttendeeInvitation(data: AttendeeEmailData) {
+    if (!emailQueueInstance) {
+      console.log('Email queue not available, skipping:', data);
+      return;
+    }
     await emailQueueInstance.add('attendee-invitation', data, {
       attempts: 3,
       backoff: {
@@ -69,6 +84,10 @@ export const emailQueue = {
   },
 
   async addBookingReminder(data: ReminderEmailData) {
+    if (!emailQueueInstance) {
+      console.log('Email queue not available, skipping:', data);
+      return;
+    }
     await emailQueueInstance.add('booking-reminder', data, {
       attempts: 3,
       backoff: {

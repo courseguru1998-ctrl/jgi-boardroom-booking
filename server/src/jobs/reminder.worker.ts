@@ -146,6 +146,11 @@ async function processReminderCheck(_job: Job): Promise<void> {
 export function startReminderWorker(): void {
   const connection = getRedis();
 
+  if (!connection) {
+    logger.info('Reminder worker not started: Redis not available');
+    return;
+  }
+
   reminderQueue = new Queue('reminder-check', { connection });
 
   // Schedule reminder checks every 15 minutes

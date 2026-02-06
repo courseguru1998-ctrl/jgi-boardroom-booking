@@ -122,6 +122,11 @@ async function processJob(job: Job): Promise<void> {
 export function startEmailWorker(): void {
   const connection = getRedis();
 
+  if (!connection) {
+    logger.info('Email worker not started: Redis not available');
+    return;
+  }
+
   worker = new Worker('email', processJob, {
     connection,
     concurrency: 5,
