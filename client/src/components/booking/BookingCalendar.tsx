@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -11,6 +11,9 @@ import { BookingModal } from './BookingModal';
 import { Button } from '@/components/common/Button';
 import { cn } from '@/utils/cn';
 import type { Booking } from '@/types';
+
+// Get today at midnight for comparisons
+const getTodayStart = () => startOfDay(new Date());
 
 interface BookingCalendarProps {
   roomId?: string;
@@ -159,6 +162,32 @@ export function BookingCalendar({ roomId, selectedDate }: BookingCalendarProps) 
       calendarRef.current.getApi().next();
     }
   };
+
+  // Prevent selecting past dates/times - THIS IS THE KEY FIX
+  const selectAllow = useCallback((selectInfo: { start: Date; end: Date }) => {
+    const today = getTodayStart();
+    return !isBefore(selectInfo.start, today);
+  }, []);
+
+  // Add custom class to past day cells for styling
+  const dayCellClassNames = useCallback((arg: { date: Date }) => {
+    const today = getTodayStart();
+    if (isBefore(arg.date, today)) {
+      return ['fc-day-disabled', 'past-date-cell'];
+    }
+    return [];
+  }, []);
+
+  // Style past cells after they mount
+  const dayCellDidMount = useCallback((arg: { date: Date; el: HTMLElement }) => {
+    const today = getTodayStart();
+    if (isBefore(arg.date, today)) {
+      arg.el.style.backgroundColor = 'rgba(156, 163, 175, 0.3)';
+      arg.el.style.pointerEvents = 'none';
+      arg.el.style.opacity = '0.5';
+      arg.el.style.cursor = 'not-allowed';
+    }
+  }, []);
 
   // Custom event content renderer
   const renderEventContent = (eventInfo: any) => {
@@ -329,6 +358,9 @@ export function BookingCalendar({ roomId, selectedDate }: BookingCalendarProps) 
             validRange={{
               start: new Date().toISOString().split('T')[0],
             }}
+            selectAllow={selectAllow}
+            dayCellClassNames={dayCellClassNames}
+            dayCellDidMount={dayCellDidMount}
           />
         </div>
 
