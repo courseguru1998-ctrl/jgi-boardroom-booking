@@ -9,12 +9,10 @@ import {
   isSameMonth,
   isSameDay,
   isToday,
-  isBefore,
   addMonths,
   subMonths,
   startOfWeek,
   endOfWeek,
-  startOfDay,
 } from 'date-fns';
 import {
   ChevronLeft,
@@ -132,20 +130,8 @@ export function CalendarPage() {
               </h3>
               <div className="flex items-center gap-1">
                 <button
-                  onClick={() => {
-                    const prevMonth = subMonths(miniCalendarDate, 1);
-                    // Only allow going back if the previous month contains today or future dates
-                    if (!isBefore(endOfMonth(prevMonth), startOfDay(new Date()))) {
-                      setMiniCalendarDate(prevMonth);
-                    }
-                  }}
-                  disabled={isBefore(endOfMonth(subMonths(miniCalendarDate, 1)), startOfDay(new Date()))}
-                  className={cn(
-                    "p-1.5 rounded-lg transition-colors",
-                    isBefore(endOfMonth(subMonths(miniCalendarDate, 1)), startOfDay(new Date()))
-                      ? "opacity-30 cursor-not-allowed"
-                      : "hover:bg-muted"
-                  )}
+                  onClick={() => setMiniCalendarDate(subMonths(miniCalendarDate, 1))}
+                  className="p-1.5 rounded-lg hover:bg-muted transition-colors"
                 >
                   <ChevronLeft className="h-4 w-4 text-foreground-muted" />
                 </button>
@@ -185,25 +171,22 @@ export function CalendarPage() {
                 const isCurrentMonth = isSameMonth(day, miniCalendarDate);
                 const isSelected = isSameDay(day, selectedDate);
                 const dayIsToday = isToday(day);
-                const dayIsPast = isBefore(day, startOfDay(new Date())) && !dayIsToday;
 
                 return (
                   <button
                     key={day.toISOString()}
-                    onClick={() => !dayIsPast && setSelectedDate(day)}
-                    disabled={dayIsPast}
+                    onClick={() => setSelectedDate(day)}
                     className={cn(
                       'relative h-9 w-full rounded-lg text-sm font-medium transition-all duration-200',
-                      dayIsPast && 'text-foreground-muted/30 cursor-not-allowed line-through',
-                      !isCurrentMonth && !dayIsPast && 'text-foreground-muted/40',
-                      isCurrentMonth && !isSelected && !dayIsPast && 'text-foreground hover:bg-muted',
-                      isSelected && !dayIsPast && 'bg-primary text-primary-foreground shadow-md',
+                      !isCurrentMonth && 'text-foreground-muted/40',
+                      isCurrentMonth && !isSelected && 'text-foreground hover:bg-muted',
+                      isSelected && 'bg-primary text-primary-foreground shadow-md',
                       dayIsToday && !isSelected && 'bg-jgi-gold/20 text-jgi-gold font-bold'
                     )}
                   >
                     {format(day, 'd')}
                     {/* Booking indicator dots */}
-                    {hasBookings && !isSelected && !dayIsPast && (
+                    {hasBookings && !isSelected && (
                       <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5">
                         {[...Array(Math.min(bookingCount, 3))].map((_, i) => (
                           <div

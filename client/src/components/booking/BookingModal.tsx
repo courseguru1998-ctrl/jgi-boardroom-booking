@@ -262,8 +262,7 @@ export function BookingModal({
               <Input
                 id="startTime"
                 type="datetime-local"
-                disabled={!canEdit || isEditing}
-                min={format(new Date(), "yyyy-MM-dd'T'HH:mm")}
+                disabled={!canEdit}
                 error={errors.startTime?.message}
                 {...register('startTime')}
               />
@@ -277,8 +276,7 @@ export function BookingModal({
               <Input
                 id="endTime"
                 type="datetime-local"
-                disabled={!canEdit || isEditing}
-                min={format(new Date(), "yyyy-MM-dd'T'HH:mm")}
+                disabled={!canEdit}
                 error={errors.endTime?.message}
                 {...register('endTime')}
               />

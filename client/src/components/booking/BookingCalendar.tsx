@@ -1,19 +1,16 @@
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { useQuery } from '@tanstack/react-query';
 import { bookingsApi } from '@/services/bookings';
-import { format, startOfMonth, endOfMonth, startOfDay, isBefore } from 'date-fns';
+import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { Plus, ChevronLeft, ChevronRight, LayoutGrid, Calendar, Clock } from 'lucide-react';
 import { BookingModal } from './BookingModal';
 import { Button } from '@/components/common/Button';
 import { cn } from '@/utils/cn';
 import type { Booking } from '@/types';
-
-// Get today at midnight for comparisons
-const getTodayStart = () => startOfDay(new Date());
 
 interface BookingCalendarProps {
   roomId?: string;
@@ -57,67 +54,6 @@ export function BookingCalendar({ roomId, selectedDate }: BookingCalendarProps) 
       calendarApi.gotoDate(selectedDate);
     }
   }, [selectedDate]);
-
-  // CORE FIX: Style past dates after calendar renders
-  useEffect(() => {
-    const stylesPastDates = () => {
-      const today = getTodayStart();
-      const todayStr = format(today, 'yyyy-MM-dd');
-
-      // Style past day columns in week/day view (they have data-date attribute)
-      document.querySelectorAll('.fc-timegrid-col[data-date]').forEach((col) => {
-        const dateStr = col.getAttribute('data-date');
-        if (dateStr && dateStr < todayStr) {
-          const el = col as HTMLElement;
-          el.style.backgroundColor = 'rgba(156, 163, 175, 0.3)';
-          el.style.pointerEvents = 'none';
-          // Also style the column's lane
-          const lane = col.querySelector('.fc-timegrid-col-frame');
-          if (lane) {
-            (lane as HTMLElement).style.opacity = '0.4';
-          }
-        }
-      });
-
-      // Style past day headers
-      document.querySelectorAll('.fc-col-header-cell[data-date]').forEach((header) => {
-        const dateStr = header.getAttribute('data-date');
-        if (dateStr && dateStr < todayStr) {
-          const el = header as HTMLElement;
-          el.style.backgroundColor = 'rgba(156, 163, 175, 0.5)';
-          el.style.opacity = '0.5';
-          const text = el.querySelector('a, span');
-          if (text) {
-            (text as HTMLElement).style.textDecoration = 'line-through';
-          }
-        }
-      });
-
-      // Style past days in month view
-      document.querySelectorAll('.fc-daygrid-day[data-date]').forEach((day) => {
-        const dateStr = day.getAttribute('data-date');
-        if (dateStr && dateStr < todayStr) {
-          const el = day as HTMLElement;
-          el.style.backgroundColor = 'rgba(156, 163, 175, 0.3)';
-          el.style.pointerEvents = 'none';
-          el.style.opacity = '0.4';
-        }
-      });
-    };
-
-    // Run after a short delay to ensure calendar is rendered
-    const timer = setTimeout(stylesPastDates, 100);
-
-    // Also run when view changes
-    if (calendarRef.current) {
-      const api = calendarRef.current.getApi();
-      api.on('datesSet', stylesPastDates);
-    }
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [currentView, dateRange]);
 
   const { data, isLoading } = useQuery({
     queryKey: ['bookings', 'calendar', dateRange.start, dateRange.end, roomId],
@@ -208,13 +144,7 @@ export function BookingCalendar({ roomId, selectedDate }: BookingCalendarProps) 
 
   const handlePrev = () => {
     if (calendarRef.current) {
-      const api = calendarRef.current.getApi();
-      const currentStart = api.view.currentStart;
-      // Only allow going back if we won't go entirely into the past
-      const today = startOfDay(new Date());
-      if (!isBefore(currentStart, today)) {
-        api.prev();
-      }
+      calendarRef.current.getApi().prev();
     }
   };
 
@@ -223,11 +153,6 @@ export function BookingCalendar({ roomId, selectedDate }: BookingCalendarProps) 
       calendarRef.current.getApi().next();
     }
   };
-
-  // Block selecting past dates - prevents booking modal from opening
-  const selectAllow = useCallback((selectInfo: { start: Date }) => {
-    return selectInfo.start >= getTodayStart();
-  }, []);
 
   // Custom event content renderer
   const renderEventContent = (eventInfo: any) => {
@@ -395,10 +320,6 @@ export function BookingCalendar({ roomId, selectedDate }: BookingCalendarProps) 
               startTime: '09:00',
               endTime: '18:00',
             }}
-            validRange={{
-              start: new Date().toISOString().split('T')[0],
-            }}
-            selectAllow={selectAllow}
           />
         </div>
 
