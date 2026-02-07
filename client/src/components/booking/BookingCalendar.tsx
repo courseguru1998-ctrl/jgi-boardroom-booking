@@ -58,6 +58,67 @@ export function BookingCalendar({ roomId, selectedDate }: BookingCalendarProps) 
     }
   }, [selectedDate]);
 
+  // CORE FIX: Style past dates after calendar renders
+  useEffect(() => {
+    const stylesPastDates = () => {
+      const today = getTodayStart();
+      const todayStr = format(today, 'yyyy-MM-dd');
+
+      // Style past day columns in week/day view (they have data-date attribute)
+      document.querySelectorAll('.fc-timegrid-col[data-date]').forEach((col) => {
+        const dateStr = col.getAttribute('data-date');
+        if (dateStr && dateStr < todayStr) {
+          const el = col as HTMLElement;
+          el.style.backgroundColor = 'rgba(156, 163, 175, 0.3)';
+          el.style.pointerEvents = 'none';
+          // Also style the column's lane
+          const lane = col.querySelector('.fc-timegrid-col-frame');
+          if (lane) {
+            (lane as HTMLElement).style.opacity = '0.4';
+          }
+        }
+      });
+
+      // Style past day headers
+      document.querySelectorAll('.fc-col-header-cell[data-date]').forEach((header) => {
+        const dateStr = header.getAttribute('data-date');
+        if (dateStr && dateStr < todayStr) {
+          const el = header as HTMLElement;
+          el.style.backgroundColor = 'rgba(156, 163, 175, 0.5)';
+          el.style.opacity = '0.5';
+          const text = el.querySelector('a, span');
+          if (text) {
+            (text as HTMLElement).style.textDecoration = 'line-through';
+          }
+        }
+      });
+
+      // Style past days in month view
+      document.querySelectorAll('.fc-daygrid-day[data-date]').forEach((day) => {
+        const dateStr = day.getAttribute('data-date');
+        if (dateStr && dateStr < todayStr) {
+          const el = day as HTMLElement;
+          el.style.backgroundColor = 'rgba(156, 163, 175, 0.3)';
+          el.style.pointerEvents = 'none';
+          el.style.opacity = '0.4';
+        }
+      });
+    };
+
+    // Run after a short delay to ensure calendar is rendered
+    const timer = setTimeout(stylesPastDates, 100);
+
+    // Also run when view changes
+    if (calendarRef.current) {
+      const api = calendarRef.current.getApi();
+      api.on('datesSet', stylesPastDates);
+    }
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [currentView, dateRange]);
+
   const { data, isLoading } = useQuery({
     queryKey: ['bookings', 'calendar', dateRange.start, dateRange.end, roomId],
     queryFn: () =>
@@ -163,43 +224,9 @@ export function BookingCalendar({ roomId, selectedDate }: BookingCalendarProps) 
     }
   };
 
-  // Block selecting past dates - works for ALL views
+  // Block selecting past dates - prevents booking modal from opening
   const selectAllow = useCallback((selectInfo: { start: Date }) => {
     return selectInfo.start >= getTodayStart();
-  }, []);
-
-  // For MONTH view - style past day cells
-  const dayCellDidMount = useCallback((arg: { date: Date; el: HTMLElement }) => {
-    if (arg.date < getTodayStart()) {
-      arg.el.style.backgroundColor = '#e5e7eb';
-      arg.el.style.pointerEvents = 'none';
-      arg.el.style.opacity = '0.4';
-    }
-  }, []);
-
-  // For WEEK/DAY view - style past time slot columns
-  const slotLaneDidMount = useCallback((arg: { el: HTMLElement }) => {
-    // Get the date from the parent column
-    const col = arg.el.closest('[data-date]') as HTMLElement;
-    if (col) {
-      const dateStr = col.getAttribute('data-date');
-      if (dateStr) {
-        const cellDate = new Date(dateStr);
-        if (cellDate < getTodayStart()) {
-          arg.el.style.backgroundColor = '#e5e7eb';
-          arg.el.style.pointerEvents = 'none';
-        }
-      }
-    }
-  }, []);
-
-  // For WEEK/DAY view - style past day headers
-  const dayHeaderDidMount = useCallback((arg: { date: Date; el: HTMLElement }) => {
-    if (arg.date < getTodayStart()) {
-      arg.el.style.backgroundColor = '#d1d5db';
-      arg.el.style.opacity = '0.5';
-      arg.el.style.textDecoration = 'line-through';
-    }
   }, []);
 
   // Custom event content renderer
@@ -372,9 +399,6 @@ export function BookingCalendar({ roomId, selectedDate }: BookingCalendarProps) 
               start: new Date().toISOString().split('T')[0],
             }}
             selectAllow={selectAllow}
-            dayCellDidMount={dayCellDidMount}
-            slotLaneDidMount={slotLaneDidMount}
-            dayHeaderDidMount={dayHeaderDidMount}
           />
         </div>
 
